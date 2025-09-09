@@ -1,5 +1,6 @@
 import WebSocket, { WebSocketServer } from "ws";
-import jwt, { JwtPayload } from "jsonwebtoken"
+import jwt from "jsonwebtoken";
+import { JWTPayload } from "@repo/shared-types/index";
 import { JWT_SECRET } from "./config";
 
 const wss = new WebSocketServer({
@@ -19,10 +20,9 @@ wss.on('connection', function connection(ws, request){
 
     try {
         
-        const decoded = jwt.verify(token, JWT_SECRET);
+        const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
 
-
-        if(!decoded || !(decoded as JwtPayload).userId){
+        if(!decoded || !decoded.userId){
             ws.close(); // if no token, then no ws connection at all
             return;
         }
