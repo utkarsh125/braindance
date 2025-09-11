@@ -23,6 +23,9 @@ importers:
       '@repo/backend-common':
         specifier: workspace:*
         version: link:../../packages/backend-common
+      '@repo/common':
+        specifier: workspace:*
+        version: link:../../packages/common
       '@repo/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
@@ -93,6 +96,9 @@ importers:
       '@repo/backend-common':
         specifier: workspace:*
         version: link:../../packages/backend-common
+      '@repo/common':
+        specifier: workspace:*
+        version: link:../../packages/common
       '@repo/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
@@ -126,6 +132,16 @@ importers:
       '@types/node':
         specifier: ^22.18.1
         version: 22.18.1
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+
+  packages/common:
+    dependencies:
+      zod:
+        specifier: ^4.1.7
+        version: 4.1.7
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -1818,6 +1834,9 @@ packages:
   yocto-queue@0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
+
+  zod@4.1.7:
+    resolution: {integrity: sha512-6qi6UYyzAl7W9uV29KvcSFXqK4QCYNYUz2YASPNBWpJE1RY6R1nArmmFPgGY/CBYWzpeMw3EOER+DR9a05O4IA==}
 
 snapshots:
 
@@ -3688,3 +3707,5 @@ snapshots:
       utf-8-validate: 5.0.10
 
   yocto-queue@0.1.0: {}
+
+  zod@4.1.7: {}

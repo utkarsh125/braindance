@@ -43,9 +43,64 @@ as it can be seen that, the `base.json` has been extended here. Now I put all my
 export const JWT_SECRET = process.env.JWT_SECRET || "123123";
 ```
 
-**NOTE: In order to use `process.env.ENV_NAME`; one must install `@types/node`**
+**NOTE: In order to use `process.env.ENV_NAME`; must install `@types/node`**
+
+---
 
 Now since the shared secret has a centralised access point, changes to `http` and `ws` can be made, `"@repo/backend-common": "workspace:*"` can be added to the `package.json` for both the apps or all the apps that need that secret. So rather than importing it from some `./config.ts` file that is exclusive only to either `http` or `ws`, I now get to import things simply from the shared secrets package
 ```ts
 import { JWT_SECRET } from "@repo/backend-common/config";
 ```
+
+---
+#### The `common` package
+Apart from a common `backend` package, another `common` package is needed as `backend-common` things would either used in `http` or `ws`. The `frontend` would also use type validations and that would come from `zod` - a package that would be used across the entire application.
+
+Install `zod` in `/packages/common`
+```js
+pnpm install zod
+```
+
+Then do the same thing that is necessary for any package to work across the entire workspace. Make changes to `tsconfig.json` and add it as a `devDependency` for `/common`
+```json
+{
+	"extends": "@repo/typescript-config/base.json",
+}
+```
+
+```json
+{
+  "name": "@repo/common",
+  ...
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*"
+  },
+  ...
+  "dependencies": {
+    "zod": "^4.1.7"
+  }
+}
+
+```
+
+Create a `types.ts` file inside `/common/src/`
+```ts
+import { z } from "zod";
+
+export const CreateUserSchema = z.object({
+    username: z.string().min(3).max(20),
+    password: z.string(),
+    name: z.string()
+})
+
+export const SignInSchema = z.object({
+    username: z.string().min(3).max(20),
+    password:z.string(),
+})
+
+export const CreateRoomSchema = z.object({
+    name: z.string().min(3).max(20),
+})
+```
+
+Now the boilerplate is ready, so making it work with `http` and `ws` is simple - add `@repo/common` as `devDependency` for both `http` and `ws` package followed by a global `pnpm install`. The common package is now ready to be used in `http/src/index.ts`.
