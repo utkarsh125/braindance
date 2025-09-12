@@ -104,3 +104,11 @@ export const CreateRoomSchema = z.object({
 ```
 
 Now the boilerplate is ready, so making it work with `http` and `ws` is simple - add `@repo/common` as `devDependency` for both `http` and `ws` package followed by a global `pnpm install`. The common package is now ready to be used in `http/src/index.ts`.
+
+---
+### Setting up Prisma in the monorepo
+Writing down these steps has become crucial since sometimes it becomes a hassle to deal with it. The steps are pretty much the same as other packages.
+- Initialise an empty project using `npm init -y` and `npx tsc --init`
+- Make changes to the `package.json`, specially in the name to `@repo/db`
+
+Follow the steps on [Prisma Setup for Turborepo](https://www.prisma.io/docs/guides/turborepo#1-create-your-monorepo-using-turborepo)
