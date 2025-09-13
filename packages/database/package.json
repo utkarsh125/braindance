@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "exports": {
     ".": "./src/index.ts",
     "./client": "./src/index.ts"
@@ -13,7 +14,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
     "@prisma/client": "^6.16.0",
     "prisma": "^6.16.0"

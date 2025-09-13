@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "build": "tsc -b",
     "dev": "npm run build && npm run start",
@@ -24,6 +25,5 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
-  "type": "commonjs"
+  "license": "ISC"
 }

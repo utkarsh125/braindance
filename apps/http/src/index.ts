@@ -2,7 +2,7 @@ import { JWT_SECRET } from "@repo/backend-common/config";
 import dotenv from "dotenv";
 import express from "express";
 import jwt from "jsonwebtoken";
-import { middleware } from "./middleware";
+import { middleware } from "./middleware.js";
 import { CreateUserSchema, SignInSchema, CreateRoomSchema } from "@repo/common/types";
 import { prisma } from "@repo/db";
 
