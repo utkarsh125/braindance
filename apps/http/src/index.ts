@@ -4,26 +4,48 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import { middleware } from "./middleware";
 import { CreateUserSchema, SignInSchema, CreateRoomSchema } from "@repo/common/types";
+import { prisma } from "@repo/db";
 
 dotenv.config();
+
+
 
 const app = express();
 
 //Sign up endpoint
-app.post("/signup", (req, res) => {
+app.post("/signup", async (req, res) => {
 
-  const data = CreateUserSchema.safeParse(req.body);
+  const parsedData = CreateUserSchema.safeParse(req.body);
 
-  if(!data.success){
+  if(!parsedData.success){
     res.json({
       message:"Incorrect input",
     })
     return;
   }
 
-  res.json({
-    userId: 123,
-  })
+  try {
+    const user = await prisma.user.create({
+      data: {
+        name: parsedData.data?.name,
+        password: parsedData.data.password,
+        email: parsedData.data.username
+      }
+    })
+
+    res.json({
+      userId: user.id,
+      message: "User created successfully",
+    })
+
+    return;
+  } catch (error) {
+    console.error(error, "Error creating user");
+    res.status(411).json({
+      message: "Error creating user",
+    })
+    return;
+  }
 });
 
 //Sign in endpoint

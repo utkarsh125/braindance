@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "exports": {
+    ".": "./src/index.ts",
     "./client": "./src/index.ts"
   },
   "scripts": {
