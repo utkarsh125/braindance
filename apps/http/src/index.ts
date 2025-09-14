@@ -12,6 +12,8 @@ dotenv.config();
 
 const app = express();
 
+app.use(express.json());
+
 //Sign up endpoint
 app.post("/signup", async (req, res) => {
 
@@ -27,9 +29,9 @@ app.post("/signup", async (req, res) => {
   try {
     const user = await prisma.user.create({
       data: {
-        name: parsedData.data?.name,
+        username: parsedData.data?.username,
         password: parsedData.data.password,
-        email: parsedData.data.username
+        email: parsedData.data.email
       }
     })
 
@@ -49,28 +51,49 @@ app.post("/signup", async (req, res) => {
 });
 
 //Sign in endpoint
-app.post("/signin", (req, res) => {
+app.post("/signin", async (req, res) => {
 
 
-  const data = SignInSchema.safeParse(req.body);
+  const parsedData = SignInSchema.safeParse(req.body);
 
-  if(!data.success){
+  if(!parsedData.success){
     res.json({
       message:"Incorrect input",
     })
     return;
   }
 
-  const userId = 1;
-  const token = jwt.sign(
-    {
-      userId,
-    },
-    JWT_SECRET
-  );
-  res.json({
-    token,
-  });
+  try {
+    
+    const user = await prisma.user.findUnique({
+      where: {
+        username: parsedData.data.username
+      }
+    })
+    console.log("User:", user);
+  
+    if(!user){
+      res.status(401).json({
+        message: "User not found"
+      })
+      return;
+    }
+  
+    //TODO: add password verification logic
+    //TODO: JWT token generation logic
+    res.json({
+      message: "Sign in successful",
+      userId: user.id
+    })
+  
+    
+  } catch (error) {
+    console.error("Error during signing in: ", error);
+    res.status(500).json({
+      message: "Error during sign in"
+    })
+  }
+
 });
 
 app.post("/room", middleware, (req, res) => {
