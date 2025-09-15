@@ -1,14 +1,10 @@
 import { JWT_SECRET } from "@repo/backend-common/config";
-import dotenv from "dotenv";
 import express from "express";
 import jwt from "jsonwebtoken";
 import { middleware } from "./middleware.js";
 import { CreateUserSchema, SignInSchema, CreateRoomSchema } from "@repo/common/types";
 import { prisma } from "@repo/db";
-
-dotenv.config();
-
-
+import bcrypt from "bcrypt";
 
 const app = express();
 
@@ -26,11 +22,13 @@ app.post("/signup", async (req, res) => {
     return;
   }
 
+  const hashedPassword = await bcrypt.hash(parsedData.data.password, 10);
+
   try {
     const user = await prisma.user.create({
       data: {
         username: parsedData.data?.username,
-        password: parsedData.data.password,
+        password: hashedPassword,
         email: parsedData.data.email
       }
     })
@@ -64,26 +62,42 @@ app.post("/signin", async (req, res) => {
   }
 
   try {
+    console.log("Attempting signin with username:", parsedData.data.username);
     
     const user = await prisma.user.findUnique({
       where: {
-        username: parsedData.data.username
+        username: parsedData.data.username,
       }
     })
-    console.log("User:", user);
-  
+    console.log("Found user:", user ? "yes" : "no");
+
     if(!user){
       res.status(401).json({
         message: "User not found"
       })
       return;
     }
-  
-    //TODO: add password verification logic
-    //TODO: JWT token generation logic
+
+    const isPasswordValid = await bcrypt.compare(parsedData.data.password, user.password);
+    console.log("Password valid:", isPasswordValid);
+
+    if(!isPasswordValid){
+      res.status(401).json({
+        message: "Invalid password"
+      })
+      return;
+    }
+
+
+    const token = jwt.sign({
+      userId: user.id,
+      username: user.username
+    }, JWT_SECRET, { expiresIn: '24h' })
+
     res.json({
       message: "Sign in successful",
-      userId: user.id
+      userId: user.id,
+      token: token
     })
   
     
