@@ -40,10 +40,10 @@ app.post("/signup", async (req, res) => {
 
     return;
   } catch (error) {
-    console.error(error, "Error creating user");
+    console.error("Error creating user:", error);
     res.status(411).json({
-      message: "Error creating user",
-    })
+      message: "Error while creating user, user might already exist"
+    });
     return;
   }
 });
@@ -62,14 +62,12 @@ app.post("/signin", async (req, res) => {
   }
 
   try {
-    console.log("Attempting signin with username:", parsedData.data.username);
-    
+  
     const user = await prisma.user.findUnique({
       where: {
         username: parsedData.data.username,
       }
     })
-    console.log("Found user:", user ? "yes" : "no");
 
     if(!user){
       res.status(401).json({
@@ -110,22 +108,44 @@ app.post("/signin", async (req, res) => {
 
 });
 
-app.post("/room", middleware, (req, res) => {
+app.post("/room", middleware, async(req, res) => {
   //add a db call over here later
 
-  const data = CreateRoomSchema.safeParse(req.body);
+  const parsedData = CreateRoomSchema.safeParse(req.body);
   
-  if(!data.success){
+  if(!parsedData.success){
     res.json({
       message: "Incorrect input"
     })
     return;
   }
 
-  //mock res
-  res.json({
-    roomId: 123,
-  })
+  const userId = req.userId;
+  
+  if (!userId) {
+    res.status(403).json({
+      message: "Not Authorized"
+    });
+    return;
+  }
+
+  try {
+    const room =await prisma.room.create({
+      data: {
+        slug: parsedData.data.name,
+        adminId: userId,
+      }
+    })
+    res.json({
+      message: "Room created successfully",
+      roomId: room.id
+    })
+  } catch (error) {
+    res.status(411).json({
+      message: "Error while creating room, room might already exist"
+    })
+    return;
+  }
 });
 
 app.listen(3001, () => {
