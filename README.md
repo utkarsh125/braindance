@@ -1,3 +1,4 @@
+# Braindance
 So this project is being created as the part of the `websocket` learning modules. What this project does should be pretty self-explanatory - I'm creating `excalidraw` clone, but with some features of my own so that I can use it in the future and make it self host-able for others to use it locally on their own machines. 
 
 ##### Technology Stack
@@ -112,3 +113,50 @@ Writing down these steps has become crucial since sometimes it becomes a hassle 
 - Make changes to the `package.json`, specially in the name to `@repo/db`
 
 Follow the steps on [Prisma Setup for Turborepo](https://www.prisma.io/docs/guides/turborepo#1-create-your-monorepo-using-turborepo)
+
+Also do not forget to add it to the exports,
+```json
+"exports": {
+    "./client": "./src/index.ts"
+},
+```
+
+### How does the Sign Up endpoint works?
+```ts
+app.post("/signup", async (req, res) => {
+
+  const parsedData = CreateUserSchema.safeParse(req.body);
+
+  if(!parsedData.success){
+    res.json({
+      message:"Incorrect input",
+    })
+    return;
+  }
+
+  try {
+    const user = await prisma.user.create({
+      data: {
+        username: parsedData.data?.username,
+        password: parsedData.data.password,
+        email: parsedData.data.email
+      }
+    })
+
+    res.json({
+      userId: user.id,
+      message: "User created successfully",
+    })
+
+    return;
+  } catch (error) {
+    console.error(error, "Error creating user");
+    res.status(411).json({
+      message: "Error creating user",
+    })
+    return;
+  }
+});
+```
+
+**NOTE: Sign in and Sign Up endpoints are ready, so is the room creation endpoint. Although, it is always better to write test cases before diving pretty deep into the development part - that is the best way to learn.**

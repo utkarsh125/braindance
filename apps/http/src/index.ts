@@ -109,8 +109,7 @@ app.post("/signin", async (req, res) => {
 });
 
 app.post("/room", middleware, async(req, res) => {
-  //add a db call over here later
-
+  
   const parsedData = CreateRoomSchema.safeParse(req.body);
   
   if(!parsedData.success){
