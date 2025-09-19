@@ -38,7 +38,6 @@ function checkUser(token: string): string | null {
         console.error("Error: ", error);
         return null;
     }
-    return null;
 }
 
 wss.on('connection', function connection(ws, request){
@@ -71,7 +70,9 @@ wss.on('connection', function connection(ws, request){
             parsedData = JSON.parse(data); // {type: "join-room", roomId: 1}
         }
 
+        //TODO: Check if the room is already in the table
         if(parsedData.type === "join-room"){
+            
             const user = users.find(x => x.ws ===ws);
             user?.rooms.push(parsedData.roomId);
         }
