@@ -9,3 +9,16 @@ declare global{
         }
     }
 }
+
+export interface User{
+    userId: string;
+    ws: WebSocket;
+    rooms: string[];
+}
+
+export interface RoomState{
+    id: string;
+    users: Map<String, User>;
+    createdAt: number;
+    lastActivity: number;
+}

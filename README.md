@@ -1,4 +1,3 @@
-# Braindance
 So this project is being created as the part of the `websocket` learning modules. What this project does should be pretty self-explanatory - I'm creating `excalidraw` clone, but with some features of my own so that I can use it in the future and make it self host-able for others to use it locally on their own machines. 
 
 ##### Technology Stack
@@ -14,8 +13,6 @@ NOTE: Make a video on the required things for the `monorepo` setup. Hosting it l
 - Typical `EC2` setup, deploy the servers over there and be done with it + `nginx`.
 - `railway` might actually help with this but a lot of research is needed for that matter.
 - A domain name is also important along with a `TSL` certificate to make it work.
-
-@1:26:05 //add shared types.
 
 #### Creating a `backend-common` to store JWT secret
 One of the most important steps in this would be to understand how to keep the secrets in a directory that is common - this suits the `monorepos` setup and centralises the place of export for some things like `JWT_SECRET` or any other secret for that matter.
@@ -159,4 +156,11 @@ app.post("/signup", async (req, res) => {
 });
 ```
 
-**NOTE: Sign in and Sign Up endpoints are ready, so is the room creation endpoint. Although, it is always better to write test cases before diving pretty deep into the development part - that is the best way to learn.**
+
+### Websockets (important)
+The main crux of this entire project revolves around the very function that websockets provide us - *a full duplex connection (best suited for collaborative tools like shared canvas, chat, etc.*. The problem here is that we can implement this using two approaches 
+- A simple MVP approach (can handle 50-100 concurrent users, maybe less)
+- A problem broadcasting system using *Redis* (can handle more users, but kinda overkill for a hobby project like this)
+Currently, I am proceeding with the MVP approach since scaling it would cost me a lot of money and I do not want to put a hole in my pockets - but I plan to put in a migration plan for people who may use it in future.
+
+**NOTE: Look for the CRDT Algorithm as it simplifies the creation of the core of this project**

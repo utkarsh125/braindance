@@ -1,6 +1,6 @@
 import WebSocket, { WebSocketServer } from "ws";
 import jwt from "jsonwebtoken";
-import { JWTPayload } from "@repo/shared-types/index";
+import { JWTPayload, RoomState, User } from "@repo/shared-types/index";
 import { prisma } from "@repo/db"
 // Dynamically import JWT_SECRET to fix ESM/CJS interop issue
 let JWT_SECRET: string;
@@ -13,14 +13,27 @@ const wss = new WebSocketServer({
     port: 8080,
 })
 
-interface User{
-    userId: string;
-    ws: WebSocket;
-    rooms: string[];
-}
+//TODO: Put these in shared-types
+// interface User{
+//     userId: string;
+//     ws: WebSocket;
+//     rooms: string[];
+// }
 
-const users: User[] = [];
+// interface RoomState{
+//     id: string;
+//     users: Map<String, User>;
+//     createdAt: number;
+//     lastActivity: number;
+// }
 
+//TODO: User Management
+const users = new Map<String, User>();//userId-> user
+const userConnections = new Map<WebSocket, string>(); //ws->userId
+
+const rooms = new Map<string, RoomState>();
+
+//validate user
 function checkUser(token: string): string | null {
 
     try {
@@ -37,6 +50,21 @@ function checkUser(token: string): string | null {
     } catch (error) {
         console.error("Error: ", error);
         return null;
+    }
+}
+
+//validate room
+async function validateRoom(roomId: string): Promise<Boolean> {
+    try {
+        const room = await prisma.room.findUnique({
+            where: {
+                id: parseInt(roomId)
+            }
+        });
+        return !!room; //if(room found then return true)
+    } catch (error) {
+        console.error("Room validation error: ", error);
+        return false;
     }
 }
 
@@ -72,9 +100,38 @@ wss.on('connection', function connection(ws, request){
 
         //TODO: Check if the room is already in the table
         if(parsedData.type === "join-room"){
-            
-            const user = users.find(x => x.ws ===ws);
-            user?.rooms.push(parsedData.roomId);
+            const roomId = parsedData.roomId;
+
+            //validate room's existence
+            const isRoom = await validateRoom(roomId);
+
+            if(!isRoom){
+                ws.send(JSON.stringify({
+                    type: "error",
+                    message: "Room not found"
+                }));
+                return;
+            }
+
+            //check room capacity
+            const room = rooms.get(roomId);
+            if(room && room.users.size >=5){
+                ws.send(JSON.stringify({
+                    type: "error",
+                    message: "Room is full"
+                }));
+                return;
+            }
+
+            //join room logic
+            const user = users.get(userId);
+            if(user){
+                //leave previous room if any
+                if(user.currentRoom){
+                    leaveRoom(user.currentRoom, userId);
+                }
+                joinRoom(roomId,user);
+            }
         }
 
         if(parsedData.type === "leave-room"){
