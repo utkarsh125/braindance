@@ -1,7 +1,9 @@
 import WebSocket, { WebSocketServer } from "ws";
 import jwt from "jsonwebtoken";
-import { JWTPayload, RoomState, User } from "@repo/shared-types/index";
-import { prisma } from "@repo/db"
+import { JWTPayload, User } from "@repo/shared-types/index";
+import { prisma } from "@repo/db";
+import { roomManager } from "./room.js"; // Import the room manager
+
 // Dynamically import JWT_SECRET to fix ESM/CJS interop issue
 let JWT_SECRET: string;
 (async () => {
@@ -11,165 +13,186 @@ let JWT_SECRET: string;
 
 const wss = new WebSocketServer({
     port: 8080,
-})
+});
 
-//TODO: Put these in shared-types
-// interface User{
-//     userId: string;
-//     ws: WebSocket;
-//     rooms: string[];
-// }
-
-// interface RoomState{
-//     id: string;
-//     users: Map<String, User>;
-//     createdAt: number;
-//     lastActivity: number;
-// }
-
-//TODO: User Management
-const users = new Map<String, User>();//userId-> user
-const userConnections = new Map<WebSocket, string>(); //ws->userId
-
-const rooms = new Map<string, RoomState>();
-
-//validate user
+// Validate user
 function checkUser(token: string): string | null {
-
     try {
-        
         const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
-        if(typeof decoded == 'string'){
+        if (typeof decoded === 'string') {
             return null;
         }
-        if(!decoded || !decoded.userId){
+        if (!decoded || !decoded.userId) {
             return null;
         }
-
         return decoded.userId;
     } catch (error) {
-        console.error("Error: ", error);
+        console.error("Error:", error);
         return null;
     }
 }
 
-//validate room
-async function validateRoom(roomId: string): Promise<Boolean> {
-    try {
-        const room = await prisma.room.findUnique({
-            where: {
-                id: parseInt(roomId)
-            }
-        });
-        return !!room; //if(room found then return true)
-    } catch (error) {
-        console.error("Room validation error: ", error);
-        return false;
-    }
-}
-
-wss.on('connection', function connection(ws, request){
-
+wss.on('connection', function connection(ws, request) {
     const url = request.url;
-    if(!url){
+    if (!url) {
         return;
     }
+    
     const queryParams = new URLSearchParams(url.split('?')[1]);
     const token = queryParams.get('token') || "";
     const userId = checkUser(token);
 
-    if(userId == null){
+    if (userId == null) {
         ws.close();
         return null;
     }
 
-    users.push({
+    // Create user object
+    const user: User = {
         userId,
         rooms: [],
-        ws
-    })
+        ws,
+        currentRoom: undefined,
+        lastSeen: Date.now()
+    };
 
-    ws.on('message', async function message(data){
+    // Add user to room manager
+    const userAdded = roomManager.addUser(user, ws);
+    if (!userAdded) {
+        ws.close(1013, 'Server at capacity');
+        return;
+    }
+
+    // Send welcome message
+    ws.send(JSON.stringify({
+        type: 'connected',
+        userId: user.userId
+    }));
+
+    ws.on('message', async function message(data) {
+
+
+        console.log(`Raw message recieved: ${data}`);
 
         let parsedData;
-        if(typeof data !== 'string'){
+        if (typeof data !== 'string') {
             parsedData = JSON.parse(data.toString());
-        }else{
-            parsedData = JSON.parse(data); // {type: "join-room", roomId: 1}
+        } else {
+            parsedData = JSON.parse(data);
+        }
+        console.log(`Parsed Message: ${parsedData}`);
+        console.log(`Message type: ${parsedData.type}`);
+
+        
+        // Update user's last seen
+        const user = roomManager.getUserByWebSocket(ws);
+
+        console.log("User found: ", user);
+        if (user) {
+            user.lastSeen = Date.now();
         }
 
-        //TODO: Check if the room is already in the table
-        if(parsedData.type === "join-room"){
-            const roomId = parsedData.roomId;
-
-            //validate room's existence
-            const isRoom = await validateRoom(roomId);
-
-            if(!isRoom){
-                ws.send(JSON.stringify({
-                    type: "error",
-                    message: "Room not found"
-                }));
-                return;
-            }
-
-            //check room capacity
-            const room = rooms.get(roomId);
-            if(room && room.users.size >=5){
-                ws.send(JSON.stringify({
-                    type: "error",
-                    message: "Room is full"
-                }));
-                return;
-            }
-
-            //join room logic
-            const user = users.get(userId);
-            if(user){
-                //leave previous room if any
-                if(user.currentRoom){
-                    leaveRoom(user.currentRoom, userId);
+        switch (parsedData.type) {
+            case "join-room":
+                const roomId = parsedData.roomId;
+                const result = await roomManager.joinRoom(roomId, userId);
+                
+                if (result.success) {
+                    ws.send(JSON.stringify({
+                        type: 'room-joined',
+                        roomId,
+                        message: 'Successfully joined room'
+                    }));
+                } else {
+                    ws.send(JSON.stringify({
+                        type: 'error',
+                        message: result.message
+                    }));
                 }
-                joinRoom(roomId,user);
-            }
-        }
+                break;
 
-        if(parsedData.type === "leave-room"){
-            const user = users.find(x => x.ws ==ws);
-            if(!user){
-                return;
-            }
-            user.rooms = user?.rooms.filter(x => x === parsedData.room);
+            case "leave-room":
+                if (user && user.currentRoom) {
+                    roomManager.leaveRoom(user.currentRoom, userId);
+                    user.currentRoom = undefined;
+                    ws.send(JSON.stringify({
+                        type: 'room-left',
+                        roomId: user.currentRoom
+                    }));
+                }
+                break;
 
-        }
+            case "chat":
+                if (!user || !user.currentRoom) {
+                    ws.send(JSON.stringify({
+                        type: 'error',
+                        message: 'Not in a room'
+                    }));
+                    break;
+                }
 
-        console.log("message received");
-        console.log(parsedData);
+                const message = parsedData.message;
+                await prisma.chat.create({
+                    data: {
+                        roomId: Number(user.currentRoom),
+                        message,
+                        userId
+                    }
+                });
 
-        if(parsedData.type === "chat"){
-            const roomId = parsedData.roomId;
-            const message = parsedData.message;
-
-            await prisma.chat.create({
-                data: {
-                    roomId: Number(roomId),
-                    message,
+                roomManager.broadcastToRoom(user.currentRoom, {
+                    type: "chat",
+                    message: message,
+                    roomId: user.currentRoom,
                     userId
-                }
-            });
+                });
+                break;
 
-            users.forEach(user => {
-                if(user.rooms.includes(roomId)){
-                    user.ws.send(JSON.stringify({
-                        type: "chat",
-                        message: message,
-                        roomId
-                    }))
+            case "cursor-move":
+                if (!user || !user.currentRoom) {
+                    break;
                 }
-            })
+
+                roomManager.broadcastToRoom(user.currentRoom, {
+                    type: 'cursor-move',
+                    userId,
+                    position: parsedData.position,
+                    timestamp: Date.now()
+                }, userId);
+                break;
+
+            case "health":
+                ws.send(JSON.stringify({ type: 'health-good' }));
+                break;
+
+            default:
+                ws.send(JSON.stringify({
+                    type: 'error',
+                    message: 'Unknown message type'
+                }));
         }
-    })
+    });
 
-})
+    // Cleanup on disconnect
+    ws.on('close', () => {
+        roomManager.removeUser(userId, ws);
+    });
 
+    ws.on('error', (error) => {
+        console.error('WebSocket error:', error);
+        roomManager.removeUser(userId, ws);
+    });
+});
 
+// Cleanup inactive rooms every 5 minutes
+setInterval(() => {
+    roomManager.cleanupInactiveRooms();
+}, 5 * 60 * 1000);
+
+// Log statistics every minute
+setInterval(() => {
+    const stats = roomManager.getStats();
+    console.log('Room Manager Stats:', stats);
+}, 60 * 1000);
+
+console.log('WebSocket server running on port 8080');
