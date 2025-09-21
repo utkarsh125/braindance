@@ -22,7 +22,7 @@ export interface User{
 
 export interface RoomState{
     id: string;
-    users: Map<string, User>;
+    users: Map<string, User>; //map of userId to User
     createdAt: number;
     lastActivity: number;
 }

@@ -5,9 +5,9 @@ import { RoomState, User } from "@repo/shared-types/index";
 
 export class RoomManager {
 
-    private rooms = new Map<string, RoomState>();
-    private users = new Map<string, User>();
-    private userConnections = new Map<WebSocket, string>();
+    private rooms = new Map<string, RoomState>(); //map of roomId to RoomState
+    private users = new Map<string, User>(); //map of userId to User
+    private userConnections = new Map<WebSocket, string>(); //map of websockets to userId
 
     private readonly MAX_USERS_PER_ROOM = 5;
     private readonly MAX_TOTAL_CONNECTIONS = 100;
@@ -15,28 +15,38 @@ export class RoomManager {
     //User Management
     addUser(user: User, ws: WebSocket): boolean {
 
+        //server capacity check
         if(this.users.size >= this.MAX_TOTAL_CONNECTIONS){
-            return false;
+            return false; //if capacity reached.
         }
 
-        this.users.set(user.userId, user);
+        //if not then
+        //add user to users map
+        this.users.set(user.userId, user); 
+
+        //map websocket to userId
         this.userConnections.set(ws, user.userId);
-        return true;
+        return true; //success
     }
 
     removeUser(userId: string, ws: WebSocket): void {
-        const user = this.users.get(userId);
-        if(user && user.currentRoom){
-            this.leaveRoom(user.currentRoom, userId);
+        const user = this.users.get(userId); //get user from usermap
+        if(user && user.currentRoom){ //if user exists and he is in a room (both true)
+            this.leaveRoom(user.currentRoom, userId); //leave the room
         }
 
-        this.users.delete(userId);
-        this.userConnections.delete(ws);
+        this.users.delete(userId);//remove user from usermap
+        this.userConnections.delete(ws);//remove websocket mapping
     }
 
     getUserByWebSocket(ws: WebSocket): User | undefined {
         const userId =this.userConnections.get(ws);
-        return userId ? this.users.get(userId): undefined;
+        
+        if(userId){
+            return this.users.get(userId);
+        }else{
+            return undefined;
+        }
 
 
     }

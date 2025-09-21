@@ -5,11 +5,15 @@ import { prisma } from "@repo/db";
 import { roomManager } from "./room.js"; // Import the room manager
 
 // Dynamically import JWT_SECRET to fix ESM/CJS interop issue
-let JWT_SECRET: string;
-(async () => {
-    const config = await import("@repo/backend-common/config");
-    JWT_SECRET = config.JWT_SECRET;
-})();
+// This issue can also be fixed by just using a simple change package.json, I made the change
+// something to keep in mind in case of ESM/CJS interop 
+// let JWT_SECRET: string;
+// (async () => {
+//     const config = await import("@repo/backend-common/config");
+//     JWT_SECRET = config.JWT_SECRET;
+// })();
+
+import { JWT_SECRET } from "@repo/backend-common/config";
 
 const wss = new WebSocketServer({
     port: 8080,
@@ -19,9 +23,14 @@ const wss = new WebSocketServer({
 function checkUser(token: string): string | null {
     try {
         const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+        // console.log("Decoded: ", decoded);
+
+        //check if we received a malformed token
         if (typeof decoded === 'string') {
             return null;
         }
+
+        //check if we have userId if we have valid string
         if (!decoded || !decoded.userId) {
             return null;
         }
@@ -33,21 +42,24 @@ function checkUser(token: string): string | null {
 }
 
 wss.on('connection', function connection(ws, request) {
-    const url = request.url;
+    const url = request.url; //this would extract localhost:8080?token=xdasd
     if (!url) {
         return;
     }
     
-    const queryParams = new URLSearchParams(url.split('?')[1]);
+    const queryParams = new URLSearchParams(url.split('?')[1]); //split after "?" so we just get the token
     const token = queryParams.get('token') || "";
-    const userId = checkUser(token);
+    const userId = checkUser(token); //validate the token
 
+    // console.log("User ID: ", userId);
+
+    //close the ws connection if token is not valid
     if (userId == null) {
         ws.close();
         return null;
     }
 
-    // Create user object
+    // Create user object with connection details - if token is valid
     const user: User = {
         userId,
         rooms: [],
@@ -69,10 +81,10 @@ wss.on('connection', function connection(ws, request) {
         userId: user.userId
     }));
 
-    ws.on('message', async function message(data) {
+    ws.on('message', async function message(data) { //listen for incoming message (type: "message")
 
 
-        console.log(`Raw message recieved: ${data}`);
+        // console.log(`Raw message recieved: ${data}`);
 
         let parsedData;
         if (typeof data !== 'string') {
@@ -80,14 +92,14 @@ wss.on('connection', function connection(ws, request) {
         } else {
             parsedData = JSON.parse(data);
         }
-        console.log(`Parsed Message: ${parsedData}`);
-        console.log(`Message type: ${parsedData.type}`);
+        // console.log(`Parsed Message: ${parsedData}`);
+        // console.log(`Message type: ${parsedData.type}`);
 
         
         // Update user's last seen
         const user = roomManager.getUserByWebSocket(ws);
 
-        console.log("User found: ", user);
+        // console.log("User found: ", user);
         if (user) {
             user.lastSeen = Date.now();
         }

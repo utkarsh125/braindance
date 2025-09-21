@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 
 //valid JWT token for testing
 const testToken = jwt.sign(
-    { userId: 'test-user-123' }, 
+    { userId: 'test-user' }, 
     '123123',
     { expiresIn: '1h' }
 );
