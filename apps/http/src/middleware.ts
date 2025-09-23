@@ -4,7 +4,11 @@ import { JWTPayload } from "@repo/shared-types/index";
 import { JWT_SECRET } from "@repo/backend-common/config";
 import jwt from "jsonwebtoken";
 
-export function middleware(req: Request, res: Response, next: NextFunction){
+interface RequestWithUserId extends Request {
+    userId?: string;
+}
+
+export function middleware(req: RequestWithUserId, res: Response, next: NextFunction){
 
     const token = req.header("authorization") ?? "";
 

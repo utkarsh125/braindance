@@ -1,3 +1,4 @@
+"use client"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -10,6 +11,9 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { login, signup } from "@/lib/auth"
 
 interface LoginFormProps extends React.ComponentProps<"div"> {
   mode?: "login" | "signup"
@@ -20,8 +24,55 @@ export function LoginForm({
   mode = "login",
   ...props
 }: LoginFormProps) {
+
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const router = useRouter();
+
   const isLogin = mode === "login"
-  
+
+
+  const handleSubmit = async ( e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    const formData = new FormData(e.target as HTMLFormElement);
+    const username = formData.get('username') as string;
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+
+
+    try {
+      
+      if(isLogin){
+        const result = await login(username, password);
+        if(result.success){
+          //store the token in local storage
+          //TODO: Secure it later, cookies are better
+          localStorage.setItem('token', result.data.token);
+          router.push('/dashboard');
+        }else{
+          setError(result.error);
+        }
+      }else{
+        const result = await signup(username, email, password);
+        if(result.success){
+          router.push('/login?message=Account created!');
+
+        }else{
+          setError(result.error);
+        }
+      }
+    } catch (error) {
+      console.log("Error: ", error);
+      setError('An error occurred, please try again later');
+    }finally{
+      setIsLoading(false);
+    }
+  }  
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -31,83 +82,49 @@ export function LoginForm({
           </CardTitle>
           <CardDescription>
             {isLogin 
-              ? "Enter your email below to login to your account"
+              ? "Enter your username and password to login"
               : "Enter your details below to create your account"
             }
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form onSubmit={handleSubmit}>
             <div className="flex flex-col gap-6">
               {!isLogin && (
                 <div className="grid gap-3">
-                  <Label htmlFor="name">Full Name</Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder="John Doe"
-                    required
-                  />
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" name="email" type="email" placeholder="m@example.com" required />
                 </div>
               )}
               <div className="grid gap-3">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                />
+                <Label htmlFor="username">Username</Label>
+                <Input id="username" name="username" type="text" placeholder="johndoe" required />
               </div>
               <div className="grid gap-3">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                  {isLogin && (
-                    <a
-                      href="#"
-                      className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                    >
-                      Forgot your password?
-                    </a>
-                  )}
-                </div>
-                <Input id="password" type="password" required />
+                <Label htmlFor="password">Password</Label>
+                <Input id="password" name="password" type="password" required />
               </div>
               {!isLogin && (
                 <div className="grid gap-3">
                   <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <Input id="confirmPassword" type="password" required />
+                  <Input id="confirmPassword" name="confirmPassword" type="password" required />
                 </div>
               )}
-              <div className="flex flex-col gap-3">
-                <Button type="submit" className="w-full">
-                  {isLogin ? "Login" : "Sign Up"}
-                </Button>
-                {/* <Button variant="outline" className="w-full">
-                  {isLogin ? "Login with Github" : "Sign up with Github"}
-                </Button> */}
-              </div>
-            </div>
-            <div className="mt-4 text-center text-sm">
-              {isLogin ? (
-                <>
-                  Don&apos;t have an account?{" "}
-                  <Link href="/signup" className="underline underline-offset-4">
-                    Sign up
-                  </Link>
-                </>
-              ) : (
-                <>
-                  Already have an account?{" "}
-                  <Link href="/login" className="underline underline-offset-4">
-                    Login
-                  </Link>
-                </>
+              
+              {error && (
+                <div className="text-sm text-red-500 bg-red-50 p-3 rounded-md">
+                  {error}
+                </div>
               )}
+              
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? 'Loading...' : (isLogin ? "Login" : "Sign Up")}
+              </Button>
             </div>
+            {/* Keep your existing link section */}
           </form>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

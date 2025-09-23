@@ -1,9 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/ui/theme-switch";
-import Image from "next/image";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 const Navigation = () => {
   return (

@@ -1,5 +1,5 @@
 import { JWT_SECRET } from "@repo/backend-common/config";
-import express from "express";
+import express, { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { middleware } from "./middleware.js";
 import { CreateUserSchema, SignInSchema, CreateRoomSchema } from "@repo/common/types";
@@ -12,6 +12,8 @@ app.use(express.json());
 
 //Sign up endpoint
 app.post("/signup", async (req, res) => {
+
+  console.log("Sign up endpoint");
 
   const parsedData = CreateUserSchema.safeParse(req.body);
 
@@ -108,7 +110,11 @@ app.post("/signin", async (req, res) => {
 
 });
 
-app.post("/room", middleware, async(req, res) => {
+interface RequestWithUserId extends Request {
+    userId?: string;
+}
+
+app.post("/room", middleware, async(req: Request, res: Response) => {
   
   const parsedData = CreateRoomSchema.safeParse(req.body);
   
@@ -119,7 +125,7 @@ app.post("/room", middleware, async(req, res) => {
     return;
   }
 
-  const userId = req.userId;
+  const userId = (req as RequestWithUserId).userId;
   
   if (!userId) {
     res.status(403).json({
