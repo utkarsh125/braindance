@@ -1,17 +1,23 @@
-import { DM_Sans, Space_Mono } from 'next/font/google';
 import './globals.css';
+import { ThemeProvider } from '@/components/theme-provider';
+import { Plus_Jakarta_Sans, Lora, Roboto_Mono } from 'next/font/google';
 
-const dmSans = DM_Sans({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-dm-sans',
+  variable: '--font-sans',
 });
 
-const spaceMono = Space_Mono({
-  weight: ['400', '700'],
+const lora = Lora({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-space-mono',
+  variable: '--font-serif',
+});
+
+const robotoMono = Roboto_Mono({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-mono',
 });
 
 export default function RootLayout({
@@ -20,8 +26,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${spaceMono.variable}`}>
-      <body>{children}</body>
+    <html lang="en" suppressHydrationWarning className={`${plusJakartaSans.variable} ${lora.variable} ${robotoMono.variable}`}>
+      <head />
+      <body className="font-sans antialiased">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
