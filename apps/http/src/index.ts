@@ -5,8 +5,15 @@ import { middleware } from "./middleware.js";
 import { CreateUserSchema, SignInSchema, CreateRoomSchema } from "@repo/common/types";
 import { prisma } from "@repo/db";
 import bcrypt from "bcrypt";
+import cors from "cors";
 
 const app = express();
+
+//CORS 
+app.use(cors({
+  origin: [process.env.FRONTEND_URL || "http://localhost:3000"],
+  credentials: true, 
+}))
 
 app.use(express.json());
 

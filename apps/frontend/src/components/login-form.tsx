@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { login, signup } from "@/lib/auth"
+import { API } from "@/lib/api"
 
 interface LoginFormProps extends React.ComponentProps<"div"> {
   mode?: "login" | "signup"
@@ -25,15 +25,13 @@ export function LoginForm({
   ...props
 }: LoginFormProps) {
 
-
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
 
   const isLogin = mode === "login"
 
-
-  const handleSubmit = async ( e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
@@ -43,32 +41,20 @@ export function LoginForm({
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
-
     try {
-      
-      if(isLogin){
-        const result = await login(username, password);
-        if(result.success){
-          //store the token in local storage
-          //TODO: Secure it later, cookies are better
-          localStorage.setItem('token', result.data.token);
-          router.push('/dashboard');
-        }else{
-          setError(result.error);
-        }
-      }else{
-        const result = await signup(username, email, password);
-        if(result.success){
-          router.push('/login?message=Account created!');
-
-        }else{
-          setError(result.error);
-        }
+      if (isLogin) {
+        const response = await API.post("signin", { username, password });
+        const data = response.data;
+        sessionStorage.setItem("token", data.token);
+        router.push("/dashboard");
+      } else {
+        const response = await API.post("signup", { username, email, password });
+        router.push('/login?message=Account created!');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.log("Error: ", error);
-      setError('An error occurred, please try again later');
-    }finally{
+      setError(error.response?.data?.message || 'An error occurred, please try again later');
+    } finally {
       setIsLoading(false);
     }
   }  
@@ -121,7 +107,6 @@ export function LoginForm({
                 {isLoading ? 'Loading...' : (isLogin ? "Login" : "Sign Up")}
               </Button>
             </div>
-            {/* Keep your existing link section */}
           </form>
         </CardContent>
       </Card>
