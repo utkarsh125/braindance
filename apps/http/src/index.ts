@@ -150,7 +150,12 @@ app.post("/room", middleware, async(req: Request, res: Response) => {
     })
     res.json({
       message: "Room created successfully",
-      roomId: room.id
+      room: {
+        id: room.id,
+        slug: room.slug,
+        createdAt: room.createdAt,
+        adminId: room.adminId
+      }
     })
   } catch (error) {
     res.status(411).json({
@@ -161,6 +166,7 @@ app.post("/room", middleware, async(req: Request, res: Response) => {
 });
 
 app.get("/rooms", middleware, async(req: Request, res: Response) => {
+  console.log("Fetching rooms");
   const userId = (req as RequestWithUserId).userId;
   
   if (!userId) {
