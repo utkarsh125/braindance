@@ -156,11 +156,37 @@ app.post("/signup", async (req, res) => {
 });
 ```
 
+**NOTE (self): Currently I'm only concerned about delivering the MVP, I will make the entire thing more secure in future**
 
 ### Websockets (important)
 The main crux of this entire project revolves around the very function that websockets provide us - *a full duplex connection (best suited for collaborative tools like shared canvas, chat, etc.*. The problem here is that we can implement this using two approaches 
 - A simple MVP approach (can handle 50-100 concurrent users, maybe less)
-- A problem broadcasting system using *Redis* (can handle more users, but kinda overkill for a hobby project like this)
-Currently, I am proceeding with the MVP approach since scaling it would cost me a lot of money and I do not want to put a hole in my pockets - but I plan to put in a migration plan for people who may use it in future.
+- ~~A problem broadcasting system using *Redis* (can handle more users, but kinda overkill for a hobby project like this)~~ *SCRAPPED.*
 
-**NOTE: Look for the CRDT Algorithm as it simplifies the creation of the core of this project**
+~~**NOTE: Look for the CRDT Algorithm as it simplifies the creation of the core of this project**~~
+*I have decided that I'm going to include CRDT in this project*
+
+### What is CRDT?
+A **CRDT (Conflict-free Replicated Data Type)** is a data structure designed for distributed systems where multiple users can update shared state **concurrently** without conflicts, and the system will **eventually converge** to the same state across all replicas, even without a central coordinator.
+
+**Key Features**
+```ts
+// User A moves rectangle to (100, 100)
+// User B moves same rectangle to (200, 200)
+// CRDT automatically resolves: rectangle ends up at (200, 200)
+
+// User works offline, makes changes
+// When reconnected, changes are automatically synced
+// No data loss, no conflicts
+
+// Canvas state is automatically persisted
+// No need for manual save/load
+// State survives server restarts
+```
+
+Normal To-dos:
+- Add `room` deletion endpoint
+- Add modals for `settings`, `rooms` that already exist (give option to join, invite or remove)
+- Fix authentication pages, give options for going back to the homescreen
+- Make the entire authentication more robust than simple token based authentication (go with `httpOnly `cookies in order to counter `xss` attacks)
+- Start working on `canvas` and use `CRDT` algorithm
