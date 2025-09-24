@@ -10,8 +10,12 @@ interface RequestWithUserId extends Request {
 
 export function middleware(req: RequestWithUserId, res: Response, next: NextFunction){
 
-    const token = req.header("authorization") ?? "";
+    // const token = req.header("authorization") ?? "";
 
+    const authHeader = req.header("authorization") ?? "";
+
+    //extract token from "Bearer <token>"
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
     try {
         const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
         req.userId = decoded.userId;

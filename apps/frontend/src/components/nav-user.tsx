@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   IconCreditCard,
@@ -6,13 +6,9 @@ import {
   IconLogout,
   IconNotification,
   IconUserCircle,
-} from "@tabler/icons-react"
+} from "@tabler/icons-react";
 
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,55 +17,93 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
-import { useAuth } from "@/hooks/use-auth"
-import { useEffect, useState } from "react"
+import { useAuth } from "@/hooks/use-auth";
+import { useEffect, useState } from "react";
 
 export function NavUser() {
-  const { isAuthenticated, token, logout } = useAuth()
-  const { isMobile } = useSidebar()
+  const { isAuthenticated, token, logout } = useAuth();
+  const { isMobile } = useSidebar();
   const [userInfo, setUserInfo] = useState<{
-    name: string
-    email: string
-    avatar: string
-  } | null>(null)
+    name: string;
+    email: string;
+    avatar: string;
+  } | null>(null);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
+      console.log(
+        "NavUser: isAuthenticated:",
+        isAuthenticated,
+        "token:",
+        token
+      );
+
       if (isAuthenticated && token) {
         try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
+          console.log("NavUser: Fetching user info...");
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/user`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
             }
-          })
+          );
+
+          console.log("NavUser: Response status:", response.status);
+
           if (response.ok) {
-            const data = await response.json()
+            const data = await response.json();
+            console.log("NavUser: User data received:", data);
+            console.log("NavUser: User username:", data.username);
+            console.log("NavUser: User email:", data.user.email);
+
             setUserInfo({
-              name: data.username,
-              email: data.email,
-              avatar: data.photo || "/avatars/default.jpg"
-            })
+              name: data.user.username,
+              email: data.user.email,
+              avatar: data.user.photo || "/avatar/avatar.png",
+            });
+          } else {
+            console.error(
+              "NavUser: Response not ok:",
+              response.status,
+              response.statusText
+            );
           }
         } catch (error) {
-          console.error('Error fetching user info:', error)
+          console.error("NavUser: Error fetching user info:", error);
         }
+      } else {
+        console.log("NavUser: Not authenticated or no token");
       }
-    }
+    };
 
-    fetchUserInfo()
-  }, [isAuthenticated, token])
-
+    fetchUserInfo();
+  }, [isAuthenticated, token]);
   if (!userInfo) {
-    return null
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton size="lg">
+            <div className="h-8 w-8 rounded-lg bg-gray-200 animate-pulse" />
+            <div className="grid flex-1 text-left text-sm leading-tight">
+              <div className="h-4 bg-gray-200 rounded animate-pulse" />
+              <div className="h-3 bg-gray-200 rounded animate-pulse mt-1" />
+            </div>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
   }
+  ``;
 
   return (
     <SidebarMenu>
@@ -83,7 +117,9 @@ export function NavUser() {
               <Avatar className="h-8 w-8 rounded-lg grayscale">
                 <AvatarImage src={userInfo.avatar} alt={userInfo.name} />
                 <AvatarFallback className="rounded-lg">
-                  {userInfo.name.charAt(0).toUpperCase()}
+                  {/* {userInfo.name.charAt(0).toUpperCase()}
+                   */}
+                  {userInfo.name ? userInfo.name.charAt(0).toUpperCase() : "U"}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
@@ -106,7 +142,9 @@ export function NavUser() {
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={userInfo.avatar} alt={userInfo.name} />
                   <AvatarFallback className="rounded-lg">
-                    {userInfo.name.charAt(0).toUpperCase()}
+                    {userInfo.name
+                      ? userInfo.name.charAt(0).toUpperCase()
+                      : "U"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
@@ -123,14 +161,6 @@ export function NavUser() {
                 <IconUserCircle />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <IconCreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <IconNotification />
-                Notifications
-              </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout}>
@@ -141,5 +171,5 @@ export function NavUser() {
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
-  )
+  );
 }

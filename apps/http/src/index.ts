@@ -201,11 +201,8 @@ app.get("/rooms", middleware, async(req: Request, res: Response) => {
   }
 });
 
-app.listen(3001, () => {
-  console.log("Listening on PORT 3001");
-});
-
 app.get('/user', middleware, async(req: Request, res: Response) => {
+  console.log("Fetching user");
   const userId = (req as RequestWithUserId).userId;
 
   if(!userId){
@@ -247,3 +244,8 @@ app.get('/user', middleware, async(req: Request, res: Response) => {
     })
   }
 })
+
+app.listen(3001, () => {
+  console.log("Listening on PORT 3001");
+});
+
