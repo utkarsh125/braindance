@@ -58,6 +58,7 @@ export function LoginForm({
         const response = await API.post("signin", { username: data.username, password: data.password });
         const responseData = response.data;
         sessionStorage.setItem("token", responseData.token);
+        sessionStorage.setItem("userId", responseData.userId);
         router.push("/dashboard");
       } else {
         const response = await API.post("signup", { username: data.username, email: data.email, password: data.password });

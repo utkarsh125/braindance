@@ -160,6 +160,90 @@ app.post("/room", middleware, async(req: Request, res: Response) => {
   }
 });
 
+app.get("/rooms", middleware, async(req: Request, res: Response) => {
+  const userId = (req as RequestWithUserId).userId;
+  
+  if (!userId) {
+    res.status(403).json({
+      message: "Not Authorized"
+    });
+    return;
+  }
+
+  try {
+    // Get all rooms where user is admin or has participated in chat
+    const rooms = await prisma.room.findMany({
+      where: {
+        OR: [
+          { adminId: userId },
+          {
+            chat: {
+              some: {
+                userId: userId
+              }
+            }
+          }
+        ]
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    res.json({
+      rooms
+    });
+  } catch (error) {
+    console.error("Error fetching rooms:", error);
+    res.status(500).json({
+      message: "Error fetching rooms"
+    });
+  }
+});
+
 app.listen(3001, () => {
   console.log("Listening on PORT 3001");
 });
+
+app.get('/user', middleware, async(req: Request, res: Response) => {
+  const userId = (req as RequestWithUserId).userId;
+
+  if(!userId){
+    res.status(403).json({
+      message: "Not Authorized"
+    });
+    return;
+  }
+
+  try {
+    
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId
+      },
+      select: {
+        id: true,
+        username: true,
+        photo: true,
+        email:true
+      }
+    });
+
+    if(!user){
+      res.status(404).json({
+        message: "User not found"
+      });
+      return;
+    }
+
+    res.json({
+      user
+    });
+    return;
+  } catch (error) {
+    console.error("Error fetching user: ", error);
+    res.status(500).json({
+      message: "Error fetching user"
+    })
+  }
+})

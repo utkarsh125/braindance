@@ -4,29 +4,38 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
 export function useAuth(){
+    const [isAuthenticated, setIsAuthenticated] = useState(false)
+    const [isLoading, setIsLoading] = useState(true)
+    const [userId, setUserId] = useState<string | null>(null)
+    const [token, setToken] = useState<string | null>(null)
 
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
-
-    const router = useRouter();
+    const router = useRouter()
 
     useEffect(() => {
-        const token = sessionStorage.getItem("token");
-        if(token){
-            setIsAuthenticated(true);
+        const storedToken = sessionStorage.getItem("token")
+        const storedUserId = sessionStorage.getItem("userId")
+        if(storedToken && storedUserId){
+            setIsAuthenticated(true)
+            setToken(storedToken)
+            setUserId(storedUserId)
         }
-        setIsLoading(false);
-    }, []);
+        setIsLoading(false)
+    }, [])
 
     const logout = () => {
-        sessionStorage.removeItem("token");
-        setIsAuthenticated(false);
-        router.push("/login");
+        sessionStorage.removeItem("token")
+        sessionStorage.removeItem("userId")
+        setIsAuthenticated(false)
+        setToken(null)
+        setUserId(null)
+        router.push("/login")
     }
 
     return {
         isAuthenticated,
         isLoading,
         logout,
+        userId,
+        token,
     }
 }
