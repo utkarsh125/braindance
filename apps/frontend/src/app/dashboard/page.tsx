@@ -1,3 +1,4 @@
+"use client"
 import { AppSidebar } from "@/components/app-sidebar"
 import { ChartAreaInteractive } from "@/components/chart-area-interactive"
 import { DataTable } from "@/components/data-table"
@@ -9,8 +10,32 @@ import {
 } from "@/components/ui/sidebar"
 
 import data from "./data.json"
+import { useAuth } from "@/hooks/use-auth"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 export default function Page() {
+
+
+  const { isAuthenticated, isLoading } = useAuth();
+
+  const router = useRouter();
+
+  useEffect(() => {
+    if(!isLoading && !isAuthenticated){
+      router.push("/login");
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  if(isLoading){
+    return <div>Loading...</div>
+  }
+
+  if(!isAuthenticated){
+    return null;
+  }
+
+
   return (
     <SidebarProvider
       style={

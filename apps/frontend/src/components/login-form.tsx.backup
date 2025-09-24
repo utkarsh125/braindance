@@ -30,6 +30,8 @@ export function LoginForm({
   ...props
 }: LoginFormProps) {
 
+  
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -45,7 +47,6 @@ export function LoginForm({
       username: '',
       email: '',
       password: '',
-      confirmPassword: '',
     }
   })
 
@@ -91,70 +92,35 @@ export function LoginForm({
               {!isLogin && (
                 <div className="grid gap-3">
                   <Label htmlFor="email">Email</Label>
-                  <Input 
-                    id="email" 
-                    {...form.register("email")} 
-                    type="email" 
-                    placeholder="m@example.com" 
-                  />
-                  {form.formState.errors.email && (
-                    <p className="text-sm text-red-500">{form.formState.errors.email.message}</p>
-                  )}
+                  <Input id="email" name="email" type="email" placeholder="m@example.com" required />
                 </div>
               )}
               <div className="grid gap-3">
                 <Label htmlFor="username">Username</Label>
-                <Input 
-                  id="username" 
-                  {...form.register("username")} 
-                  type="text" 
-                  placeholder="johndoe" 
-                />
-                {form.formState.errors.username && (
-                  <p className="text-sm text-red-500">{form.formState.errors.username.message}</p>
-                )}
+                <Input id="username" name="username" type="text" placeholder="johndoe" required />
               </div>
               <div className="grid gap-3">
                 <Label htmlFor="password">Password</Label>
-                <Input 
-                  id="password" 
-                  {...form.register("password")} 
-                  type="password" 
-                />
-                {form.formState.errors.password && (
-                  <p className="text-sm text-red-500">{form.formState.errors.password.message}</p>
-                )}
+                <Input id="password" name="password" type="password" required />
               </div>
-        
+              {!isLogin && (
+                <div className="grid gap-3">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <Input id="confirmPassword" name="confirmPassword" type="password" required />
+                </div>
+              )}
+              
               {error && (
                 <div className="text-sm text-red-500 bg-red-50 p-3 rounded-md">
                   {error}
                 </div>
               )}
               
-              <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? 'Loading...' : (isLogin ? "Login" : "Sign Up")}
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? 'Loading...' : (isLogin ? "Login" : "Sign Up")}
               </Button>
             </div>
           </form>
-          
-          <div className="text-center text-sm mt-4">
-            {isLogin ? (
-              <p>
-                Don't have an account?{" "}
-                <Link href="/signup" className="text-primary hover:underline">
-                  Sign up
-                </Link>
-              </p>
-            ) : (
-              <p>
-                Already have an account?{" "}
-                <Link href="/login" className="text-primary hover:underline">
-                  Sign in
-                </Link>
-              </p>
-            )}
-          </div>
         </CardContent>
       </Card>
     </div>

@@ -2,8 +2,13 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { ThemeSwitch } from "@/components/theme-switch"
+import { useAuth } from "@/hooks/use-auth"
 
 export function SiteHeader() {
+
+  const { logout } = useAuth();
+
+  
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
@@ -15,15 +20,13 @@ export function SiteHeader() {
         <h1 className="text-base font-medium">Documents</h1>
         <div className="ml-auto flex items-center gap-2">
           <ThemeSwitch />
-          <Button variant="ghost" asChild size="sm" className="hidden sm:flex">
-            <a
-              href="https://github.com/shadcn-ui/ui/tree/main/apps/v4/app/(examples)/dashboard"
-              rel="noopener noreferrer"
-              target="_blank"
-              className="dark:text-foreground"
+          <Button variant="destructive" asChild size="sm" className="hidden sm:flex">
+            <div
+              className="dark:text-foreground cursor-pointer"
+              onClick={logout}
             >
-              GitHub
-            </a>
+              Logout
+            </div>
           </Button>
         </div>
       </div>
