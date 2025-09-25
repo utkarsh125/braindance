@@ -165,6 +165,69 @@ app.post("/room", middleware, async(req: Request, res: Response) => {
   }
 });
 
+//Room Deletion Endpoint
+app.delete("/room/:id", middleware, async(req: Request, res: Response) => {
+  const roomId = (req.params.id);
+  const userId = (req as RequestWithUserId).userId;
+
+  if(!userId){
+    res.status(403).json({
+      message: "Not authorized"
+    });
+    return;
+  }
+
+  if(!(roomId && !isNaN(parseInt(roomId)))){
+    res.status(400).json({
+      message: "Invalid room id"
+    });
+    return;
+  }
+
+  try {
+    //first check if room exists and user is admin
+    const room = await prisma.room.findUnique({
+      where: {
+        id: parseInt(roomId)
+      }
+    });
+
+    //if room not found then
+    if(!room){
+      res.status(404).json({
+        message: "Room not found"
+      });
+      return;
+    }
+
+    if(room.adminId !== userId){
+      // {
+      //   "adminId":"aedwquohondl" ---> this is the userId of the creator of the room
+      // }
+      //so it should be userId === room.adminId
+      res.status(403).json({
+        message: "Not authorized, only room admin can delete room"
+      })
+      return;
+    }
+
+    await prisma.room.delete({
+      where: {
+        id: parseInt(roomId)
+      }
+    });
+    res.json({
+      message: "Room deleted successfully"
+    });
+    
+  } catch (error) {
+    console.error("Error deleting room: ", error);
+    res.status(500).json({
+      message: "Error deleting room"
+    })
+  }
+});
+
 app.get("/rooms", middleware, async(req: Request, res: Response) => {
   console.log("Fetching rooms");
   const userId = (req as RequestWithUserId).userId;
