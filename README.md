@@ -190,3 +190,4 @@ Normal To-dos:
 - Fix authentication pages, give options for going back to the homescreen
 - Make the entire authentication more robust than simple token based authentication (go with `httpOnly `cookies in order to counter `xss` attacks)
 - Start working on `canvas` and use `CRDT` algorithm
+- Think about a deadline to end this project
