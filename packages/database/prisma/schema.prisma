@@ -22,6 +22,7 @@ model User {
   photo    String?
   room     Room[]
   chat     Chat[]
+  Document Document[]
 }
 
 model Room {
@@ -41,4 +42,14 @@ model Chat {
   userId  String
   room    Room   @relation(fields: [roomId], references: [id])
   user    User   @relation(fields: [userId], references: [id])
+}
+
+model Document {
+  id String @id @default(uuid())
+  title String
+  content Json 
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
